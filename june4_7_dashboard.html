@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operations Dashboard — Jun 4–7, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --blue:#1a3a5c;--blue2:#2a5298;--accent:#1a73e8;
+  --green:#1e8e3e;--red:#c5221f;--yellow:#f9ab00;--orange:#e37400;--purple:#7c4dff;--teal:#00897b;
+  --bg:#f4f6f9;--card:#fff;--border:#dde1e7;--text:#202124;--muted:#70757a;
+  --shadow:0 1px 4px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+
+header{background:var(--blue);color:#fff;padding:0 24px;display:flex;align-items:center;gap:16px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+header h1{font-size:17px;font-weight:700;flex:1}
+header .meta{font-size:11px;opacity:.7;white-space:nowrap}
+
+nav{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 24px;position:sticky;top:56px;z-index:99;overflow-x:auto;gap:0}
+.tab{padding:13px 20px;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap;letter-spacing:.3px;margin-bottom:-2px}
+.tab:hover{color:var(--text);background:#f8f9fa}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:#fff}
+
+main{padding:24px;max-width:1440px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+
+/* KPI Cards */
+.kpi-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.kpi{background:var(--card);border-radius:8px;padding:16px 18px;flex:1;min-width:150px;box-shadow:var(--shadow);border-left:4px solid var(--accent);transition:box-shadow .15s}
+.kpi:hover{box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.kpi.green{border-left-color:var(--green)}.kpi.orange{border-left-color:var(--orange)}
+.kpi.red{border-left-color:var(--red)}.kpi.yellow{border-left-color:var(--yellow)}
+.kpi.purple{border-left-color:var(--purple)}.kpi.teal{border-left-color:var(--teal)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.kpi-value{font-size:26px;font-weight:800;line-height:1;letter-spacing:-.5px}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Cards */
+.card{background:var(--card);border-radius:8px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;font-weight:700;margin-bottom:14px;color:var(--blue);text-transform:uppercase;letter-spacing:.4px}
+.card-row{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.card-half{flex:1;min-width:300px;background:var(--card);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow)}
+.card-half h3{font-size:13px;font-weight:700;margin-bottom:14px;color:var(--blue);text-transform:uppercase;letter-spacing:.4px}
+
+/* Charts */
+.chart-wrap{position:relative;height:280px}
+.chart-wrap.tall{height:380px}
+.chart-wrap.sm{height:190px}
+.chart-wrap.xs{height:150px}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{background:#f1f3f4;font-weight:700;padding:7px 10px;text-align:right;white-space:nowrap;border:1px solid var(--border);color:var(--blue);font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+th:first-child{text-align:left}
+td{padding:6px 10px;text-align:right;border:1px solid var(--border)}
+td:first-child{text-align:left;font-weight:600}
+tr:nth-child(even) td{background:#fafbfc}
+tr:hover td{background:#e8f0fe}
+tr.total td{font-weight:800;background:#f1f3f4;border-top:2px solid var(--border)}
+
+/* Insights */
+.insight{background:#e8f0fe;border-left:4px solid var(--accent);border-radius:0 6px 6px 0;padding:10px 14px;margin-top:14px;font-size:12px;color:#1a3a5c;line-height:1.6}
+.insight strong{display:block;margin-bottom:2px;font-size:12px}
+.warn{background:#fef7e0;border-left-color:var(--yellow);color:#7a5c00}
+.alert{background:#fce8e6;border-left-color:var(--red);color:#8b0000}
+
+/* Grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:1000px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* Badges / Tags */
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.badge.multi{background:#e8f0fe;color:#1557b0}
+.badge.single{background:#e6f4ea;color:#137333}
+.badge.store{background:#fce8e6;color:#c5221f}
+.badge.special{background:#fff3e0;color:#b06000}
+.badge.cl{background:#f3e5f5;color:#6a1b9a}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.wg-tag{padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700;cursor:default}
+.wg-multi{background:#e8f0fe;color:#1557b0}
+.wg-single{background:#e6f4ea;color:#137333}
+.wg-store{background:#fce8e6;color:#c5221f}
+.wg-special{background:#fff3e0;color:#b06000}
+.wg-cl{background:#f3e5f5;color:#6a1b9a}
+
+/* Design metric rows */
+.design-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.design-cell{background:#f8f9fa;border:1px solid var(--border);border-radius:6px;padding:12px 14px;flex:1;min-width:140px}
+.design-cell .dlabel{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.design-cell .dval{font-size:20px;font-weight:800;color:var(--blue)}
+.design-cell .dsub{font-size:11px;color:var(--muted);margin-top:3px}
+
+.sep{border:none;border-top:1px solid var(--border);margin:20px 0}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Operations Performance Dashboard</h1>
+  <div class="meta">Jun 4–7, 2026 &nbsp;·&nbsp; Thu–Sun &nbsp;·&nbsp; MD Zone &nbsp;·&nbsp; 403,150 WMS events (deduplicated)</div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('overview',this)">Overview</div>
+  <div class="tab" onclick="showTab('inventory',this)">Inventory Pull</div>
+  <div class="tab" onclick="showTab('cycles',this)">Cycle Times</div>
+  <div class="tab" onclick="showTab('waves',this)">Wave Groups</div>
+  <div class="tab" onclick="showTab('putwall',this)">Putwall</div>
+  <div class="tab" onclick="showTab('rebin',this)">Re-bin Design</div>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════════
+     OVERVIEW
+═══════════════════════════════════════════════════════════════ -->
+<div id="overview" class="panel active">
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total B2C Units</div><div class="kpi-value">31,646</div><div class="kpi-sub">4-day total · ~7,912 avg/day</div></div>
+    <div class="kpi green"><div class="kpi-label">Multi Units</div><div class="kpi-value">17,682</div><div class="kpi-sub">5,503 orders · avg 3.22 units/order</div></div>
+    <div class="kpi teal"><div class="kpi-label">Singles Units</div><div class="kpi-value">13,964</div><div class="kpi-sub">13,950 orders · always 1:1</div></div>
+    <div class="kpi orange"><div class="kpi-label">B2B Orders</div><div class="kpi-value">549</div><div class="kpi-sub">Direct pick — bypasses putwall</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Total Replen Units</div><div class="kpi-value">27,440</div><div class="kpi-sub">Multi 54% · Singles 43% · Store 3%</div></div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>Daily B2C Output — Units Packed</h3>
+      <div class="chart-wrap"><canvas id="c-daily-vol"></canvas></div>
+    </div>
+    <div class="card-half">
+      <h3>Daily Replenishment by Type</h3>
+      <div class="chart-wrap"><canvas id="c-daily-repl"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Daily Summary</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th style="text-align:left">Day</th>
+            <th>Multi Units</th><th>Multi Orders</th>
+            <th>Single Units</th><th>Single Orders</th>
+            <th>B2B Orders</th><th>Total B2C</th>
+            <th>Total Replen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Jun 4</td><td style="text-align:left">Thursday</td><td>4,843</td><td>1,536</td><td>3,767</td><td>3,767</td><td>184</td><td><strong>8,610</strong></td><td>7,417</td></tr>
+          <tr><td>Jun 5</td><td style="text-align:left">Friday</td><td>4,685</td><td>1,352</td><td>3,386</td><td>3,385</td><td>184</td><td><strong>8,071</strong></td><td>7,935</td></tr>
+          <tr><td>Jun 6</td><td style="text-align:left">Saturday</td><td>4,225</td><td>1,366</td><td>2,854</td><td>2,854</td><td>126</td><td><strong>7,079</strong></td><td>5,735</td></tr>
+          <tr><td>Jun 7</td><td style="text-align:left">Sunday</td><td>3,929</td><td>1,249</td><td>3,957</td><td>3,944</td><td>55</td><td><strong>7,886</strong></td><td>6,353</td></tr>
+          <tr class="total"><td>TOTAL</td><td></td><td>17,682</td><td>5,503</td><td>13,964</td><td>13,950</td><td>549</td><td>31,646</td><td>27,440</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight"><strong>Sunday shift (Jun 7):</strong> Only day where singles exceeded multi units (3,957 vs 3,929). B2B dropped sharply across the week: 184 → 184 → 126 → 55 orders. Jun 6 had the lowest replen volume (5,735) which contributed to the longest cycle times that day.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     INVENTORY PULL
+═══════════════════════════════════════════════════════════════ -->
+<div id="inventory" class="panel">
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Units Pulled (4 days)</div><div class="kpi-value">27,440</div><div class="kpi-sub">~6,860 avg/day</div></div>
+    <div class="kpi green"><div class="kpi-label">Top 2 Zones (3F + 2E)</div><div class="kpi-value">48.5%</div><div class="kpi-sub">13,296 of 27,440 units</div></div>
+    <div class="kpi"><div class="kpi-label">Top 4 Zones Coverage</div><div class="kpi-value">73.1%</div><div class="kpi-sub">3F · 2E · 2H · 1G</div></div>
+    <div class="kpi orange"><div class="kpi-label">Top 6 Zones Coverage</div><div class="kpi-value">93.5%</div><div class="kpi-sub">+ 3H · 1H</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Active Zones</div><div class="kpi-value">10</div><div class="kpi-sub">1A 1B 1C 1G 1H 1Y 2E 2H 3F 3H</div></div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>Zone Share — % of Total Replen (4-day)</h3>
+      <div class="chart-wrap"><canvas id="c-zone-share"></canvas></div>
+    </div>
+    <div class="card-half">
+      <h3>Zone Units by Day — Top 6 Zones (Stacked)</h3>
+      <div class="chart-wrap"><canvas id="c-zone-daily"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Full Zone Breakdown</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Zone</th><th>4-Day Total</th><th>% Total</th><th>Jun 4</th><th>Jun 5</th><th>Jun 6</th><th>Jun 7</th><th>Day-over-Day Swing</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>3F</td><td>7,075</td><td>25.8%</td><td>2,190</td><td>2,131</td><td>1,323</td><td>1,431</td><td style="color:var(--muted)">Stable · −40% Sat</td></tr>
+          <tr><td>2E</td><td>6,221</td><td>22.7%</td><td>1,630</td><td>1,873</td><td>1,265</td><td>1,453</td><td style="color:var(--muted)">Stable</td></tr>
+          <tr><td>2H</td><td>3,778</td><td>13.8%</td><td>690</td><td>1,498</td><td>633</td><td>957</td><td style="color:var(--red);font-weight:700">+117% Fri → −58% Sat</td></tr>
+          <tr><td>1G</td><td>2,973</td><td>10.8%</td><td>965</td><td>665</td><td>612</td><td>731</td><td style="color:var(--muted)">−31% Fri then flat</td></tr>
+          <tr><td>3H</td><td>2,891</td><td>10.5%</td><td>958</td><td>621</td><td>693</td><td>619</td><td style="color:var(--muted)">−35% Fri then stable</td></tr>
+          <tr><td>1H</td><td>2,720</td><td>9.9%</td><td>571</td><td>903</td><td>714</td><td>532</td><td style="color:var(--muted)">+58% Fri, −41% Sat</td></tr>
+          <tr><td>1Y</td><td>1,275</td><td>4.6%</td><td>268</td><td>150</td><td>358</td><td>499</td><td style="color:var(--green);font-weight:700">+233% by Sun</td></tr>
+          <tr><td>1A</td><td>265</td><td>1.0%</td><td>93</td><td>26</td><td>88</td><td>58</td><td style="color:var(--muted)">Variable</td></tr>
+          <tr><td>1B</td><td>191</td><td>0.7%</td><td>46</td><td>61</td><td>42</td><td>42</td><td style="color:var(--muted)">Low, stable</td></tr>
+          <tr><td>1C</td><td>44</td><td>0.2%</td><td>4</td><td>4</td><td>6</td><td>30</td><td style="color:var(--muted)">Mostly Sun</td></tr>
+          <tr class="total"><td>TOTAL</td><td>27,440</td><td>100%</td><td>7,417</td><td>7,935</td><td>5,735</td><td>6,353</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight alert"><strong>Zone 2H spike — Friday Jun 5:</strong> 690 → 1,498 units (+117%), then back to 633 on Saturday. This single-day swing of 808 units is driven by SKU content of the 05MULTI-01 wave. For the mobile putwall: pickers in 2H will have dramatically different walk volumes day to day based on wave composition.</div>
+    <div class="insight" style="margin-top:8px"><strong>Re-bin implication:</strong> The mobile wall needs to be accessible from zones 3F and 2E primarily (49% of all picks). Placing the wall in a central position between these two zones minimizes picker travel.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CYCLE TIMES
+═══════════════════════════════════════════════════════════════ -->
+<div id="cycles" class="panel">
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Multi — Avg Cycle Time</div><div class="kpi-value">6.1 hr</div><div class="kpi-sub">5,483 orders · working hours only</div></div>
+    <div class="kpi green"><div class="kpi-label">Multi — Median</div><div class="kpi-value">5.8 hr</div><div class="kpi-sub">55% complete in 4–8 hr window</div></div>
+    <div class="kpi red"><div class="kpi-label">Multi — P90</div><div class="kpi-value">9.4 hr</div><div class="kpi-sub">22% exceed 8 working hours</div></div>
+    <div class="kpi orange"><div class="kpi-label">B2B — Avg Cycle Time</div><div class="kpi-value">3.6 hr</div><div class="kpi-sub">448 orders measured</div></div>
+    <div class="kpi yellow"><div class="kpi-label">B2B — Median</div><div class="kpi-value">2.5 hr</div><div class="kpi-sub">~41% faster than multi</div></div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>B2C Multi — Cycle Time by Day</h3>
+      <div class="chart-wrap"><canvas id="c-ct-multi"></canvas></div>
+      <div class="insight"><strong>Jun 4 significantly faster (3.7 hr avg):</strong> These orders were completing a wave that started the previous day — units already on the wall. Jun 6 slowest at 7.6 hr avg, the same day replen volume was lightest (5,735 units). Pipeline input directly affects completion speed.</div>
+    </div>
+    <div class="card-half">
+      <h3>B2B (OUT Orders) — Cycle Time by Day</h3>
+      <div class="chart-wrap"><canvas id="c-ct-b2b"></canvas></div>
+      <div class="insight"><strong>B2B is ~40% faster than multi</strong> — direct pick flow (PICKLINE → MOVE-OUT) bypasses the putwall entirely. Jun 6 spike to 5.1 hr avg aligns with the 06-STORE wave running late in the day. 58 of 448 B2B orders (13%) span more than 8 working hours.</div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>Multi Order Cycle Time — Distribution</h3>
+      <div class="chart-wrap"><canvas id="c-ct-dist"></canvas></div>
+      <div class="insight warn"><strong>Wall slot occupancy:</strong> 55% of multi orders (2,997) take 4–8 working hours to complete. In the Re-bin model, a wall slot holds an order for most of the shift before moving to a pack station.</div>
+    </div>
+    <div class="card-half">
+      <h3>Multi Order Basket Size Distribution</h3>
+      <div class="chart-wrap"><canvas id="c-basket"></canvas></div>
+      <div class="insight"><strong>91% of orders have ≤5 units.</strong> Designing wall slots for 6 units covers 94.3% of all orders. The remaining ~6% (up to 133 units) need an exception lane or oversized tote.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Cycle Time Comparison Table</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Order Type</th><th>Date</th><th>Orders</th><th>Avg CT</th><th>Median CT</th><th>P75 CT</th><th>P90 CT</th><th>Max CT</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge multi">MULTI</span></td><td>Jun 4</td><td>1,526</td><td style="color:var(--green);font-weight:700">3.7 hr</td><td>4.0 hr</td><td>—</td><td>6.2 hr</td><td>8.7 hr</td></tr>
+          <tr><td><span class="badge multi">MULTI</span></td><td>Jun 5</td><td>1,345</td><td>6.1 hr</td><td>6.1 hr</td><td>—</td><td>9.0 hr</td><td>17.0 hr</td></tr>
+          <tr><td><span class="badge multi">MULTI</span></td><td>Jun 6</td><td>1,363</td><td style="color:var(--red);font-weight:700">7.6 hr</td><td>7.2 hr</td><td>—</td><td>10.1 hr</td><td>24.2 hr</td></tr>
+          <tr><td><span class="badge multi">MULTI</span></td><td>Jun 7</td><td>1,249</td><td>7.3 hr</td><td>6.3 hr</td><td>—</td><td>12.8 hr</td><td>34.8 hr</td></tr>
+          <tr class="total"><td><span class="badge multi">MULTI</span></td><td>Overall</td><td>5,483</td><td>6.1 hr</td><td>5.8 hr</td><td>7.7 hr</td><td>9.4 hr</td><td>34.8 hr</td></tr>
+          <tr><td><span class="badge store">B2B</span></td><td>Jun 4</td><td>141</td><td style="color:var(--green);font-weight:700">2.7 hr</td><td>2.1 hr</td><td>—</td><td>6.6 hr</td><td>7.4 hr</td></tr>
+          <tr><td><span class="badge store">B2B</span></td><td>Jun 5</td><td>128</td><td>3.4 hr</td><td>2.2 hr</td><td>—</td><td>9.9 hr</td><td>10.8 hr</td></tr>
+          <tr><td><span class="badge store">B2B</span></td><td>Jun 6</td><td>124</td><td style="color:var(--red);font-weight:700">5.1 hr</td><td>3.5 hr</td><td>—</td><td>11.2 hr</td><td>12.8 hr</td></tr>
+          <tr><td><span class="badge store">B2B</span></td><td>Jun 7</td><td>55</td><td>3.0 hr</td><td>3.1 hr</td><td>—</td><td>5.7 hr</td><td>15.3 hr</td></tr>
+          <tr class="total"><td><span class="badge store">B2B</span></td><td>Overall</td><td>448</td><td>3.6 hr</td><td>2.5 hr</td><td>4.9 hr</td><td>9.9 hr</td><td>15.3 hr</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight warn" style="margin-top:12px"><strong>Singles cycle time note:</strong> 97% of 13,950 singles orders show 0–15 working minutes because each packslip appears in only 1–2 WMS events within the same minute (PICKDETL + PICKLINE). This reflects packer scan time only — not full order lifecycle. True singles cycle time requires linking each order back to its wave ALLOCORD timestamp via the group chain.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WAVE GROUPS
+═══════════════════════════════════════════════════════════════ -->
+<div id="waves" class="panel">
+
+  <div class="card">
+    <h3>Replenishment by Wave Type — Daily Composition</h3>
+    <div class="chart-wrap"><canvas id="c-wave-stack"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Jun 4 — Thursday &nbsp;<span style="color:var(--muted);font-weight:400;text-transform:none;font-size:12px">7,417 replen units</span></h3>
+      <div class="tag-row">
+        <span class="wg-tag wg-multi">03MULTI-01 · 144</span>
+        <span class="wg-tag wg-multi">03MULTI-02 · 2,770</span>
+        <span class="wg-tag wg-multi">04MULTI-01 · 1,531</span>
+        <span class="wg-tag wg-single">03-SINGLE · 332</span>
+        <span class="wg-tag wg-single">04-SINGLE · 2,638</span>
+        <span class="wg-tag wg-special">PREZ 3JUN · 1</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="c-wg4"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Jun 5 — Friday &nbsp;<span style="color:var(--muted);font-weight:400;text-transform:none;font-size:12px">7,935 replen units · peak day</span></h3>
+      <div class="tag-row">
+        <span class="wg-tag wg-single">04-SINGLE · 3,360</span>
+        <span class="wg-tag wg-multi">05MULTI-01 · 2,461</span>
+        <span class="wg-tag wg-multi">06MULTI-01 · 1,920</span>
+        <span class="wg-tag wg-special">05-STUDIO · 187</span>
+        <span class="wg-tag wg-multi">04MULTI-01 · 2</span>
+        <span class="wg-tag wg-special">PREZ 5JUN · 1</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="c-wg5"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Jun 6 — Saturday &nbsp;<span style="color:var(--muted);font-weight:400;text-transform:none;font-size:12px">5,735 replen units · lightest day</span></h3>
+      <div class="tag-row">
+        <span class="wg-tag wg-multi">06-MULTI-0 · 2,369</span>
+        <span class="wg-tag wg-single">06-SINGLE · 2,083</span>
+        <span class="wg-tag wg-multi">07MULTI-01 · 560</span>
+        <span class="wg-tag wg-store">06-STORE · 341</span>
+        <span class="wg-tag wg-multi">06MULTI-01 · 206</span>
+        <span class="wg-tag wg-special">05-STUDIO · 175</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="c-wg6"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Jun 7 — Sunday &nbsp;<span style="color:var(--muted);font-weight:400;text-transform:none;font-size:12px">6,353 replen units</span></h3>
+      <div class="tag-row">
+        <span class="wg-tag wg-single">06-SINGLE · 3,295</span>
+        <span class="wg-tag wg-multi">07MULTI-01 · 2,052</span>
+        <span class="wg-tag wg-multi">08-MULTI · 691</span>
+        <span class="wg-tag wg-store">07-STORE · 233</span>
+        <span class="wg-tag wg-cl">06MULTI-CL · 23</span>
+        <span class="wg-tag wg-special">PREZ 6JUN · 3</span>
+        <span class="wg-tag wg-special">PREZ 7JUN · 6</span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="c-wg7"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wave Group Detail</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Group</th><th>Type</th><th>Replen Units</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Jun 4</td><td>03MULTI-02</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>2,770</td><td style="text-align:left;color:var(--muted)">Finishing prior-day wave</td></tr>
+          <tr><td>Jun 4</td><td>04MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>1,531</td><td style="text-align:left;color:var(--muted)">New day wave</td></tr>
+          <tr><td>Jun 4</td><td>03MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>144</td><td style="text-align:left;color:var(--muted)">Residual from prior day</td></tr>
+          <tr><td>Jun 4</td><td>04-SINGLE</td><td style="text-align:left"><span class="badge single">SINGLE</span></td><td>2,638</td><td></td></tr>
+          <tr><td>Jun 4</td><td>03-SINGLE</td><td style="text-align:left"><span class="badge single">SINGLE</span></td><td>332</td><td></td></tr>
+          <tr><td>Jun 5</td><td>05MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>2,461</td><td></td></tr>
+          <tr><td>Jun 5</td><td>06MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>1,920</td><td style="text-align:left;color:var(--red);font-weight:600">Next-day wave starting same day</td></tr>
+          <tr><td>Jun 5</td><td>04-SINGLE</td><td style="text-align:left"><span class="badge single">SINGLE</span></td><td>3,360</td><td style="text-align:left;color:var(--muted)">Carrying over from Jun 4</td></tr>
+          <tr><td>Jun 5</td><td>05-STUDIO</td><td style="text-align:left"><span class="badge special">SPECIAL</span></td><td>187</td><td></td></tr>
+          <tr><td>Jun 6</td><td>06-MULTI-0</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>2,369</td><td style="text-align:left;color:var(--muted)">Same wave as 06MULTI-01 (naming typo)</td></tr>
+          <tr><td>Jun 6</td><td>07MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>560</td><td style="text-align:left;color:var(--red);font-weight:600">Next-day wave starting Sat</td></tr>
+          <tr><td>Jun 6</td><td>06-SINGLE</td><td style="text-align:left"><span class="badge single">SINGLE</span></td><td>2,083</td><td></td></tr>
+          <tr><td>Jun 6</td><td>06-STORE</td><td style="text-align:left"><span class="badge store">STORE/B2B</span></td><td>341</td><td></td></tr>
+          <tr><td>Jun 6</td><td>06MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>206</td><td style="text-align:left;color:var(--muted)">Residual</td></tr>
+          <tr><td>Jun 6</td><td>05-STUDIO</td><td style="text-align:left"><span class="badge special">SPECIAL</span></td><td>175</td><td></td></tr>
+          <tr><td>Jun 7</td><td>07MULTI-01</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>2,052</td><td></td></tr>
+          <tr><td>Jun 7</td><td>08-MULTI</td><td style="text-align:left"><span class="badge multi">MULTI</span></td><td>691</td><td style="text-align:left;color:var(--red);font-weight:600">Next-day wave starting Sun</td></tr>
+          <tr><td>Jun 7</td><td>06-SINGLE</td><td style="text-align:left"><span class="badge single">SINGLE</span></td><td>3,295</td><td style="text-align:left;color:var(--muted)">Large singles carry-over</td></tr>
+          <tr><td>Jun 7</td><td>07-STORE</td><td style="text-align:left"><span class="badge store">STORE/B2B</span></td><td>233</td><td></td></tr>
+          <tr><td>Jun 7</td><td>06MULTI-CL</td><td style="text-align:left"><span class="badge cl">CLEARANCE</span></td><td>23</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight alert"><strong>Concurrent wave overlap — Jun 5:</strong> 06MULTI-01 (1,920 units) began replenishing while 05MULTI-01 was still running. 3 active multi waves simultaneously. This is the key wall slot pressure point: you need enough slots to hold orders from 2–3 active waves at the same time.</div>
+    <div class="insight" style="margin-top:8px"><strong>Naming inconsistency:</strong> "06-MULTI-0" and "06MULTI-01" appear to be the same wave (2,369 + 206 = 2,575 units on Jun 6). Likely a WMS entry typo. Worth standardizing the wave naming convention.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PUTWALL
+═══════════════════════════════════════════════════════════════ -->
+<div id="putwall" class="panel">
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">PW Bins Active (4 days)</div><div class="kpi-value">879</div><div class="kpi-sub">PW01 · PW02 · PW03</div></div>
+    <div class="kpi green"><div class="kpi-label">Total PICK_LP Events</div><div class="kpi-value">17,060</div><div class="kpi-sub">~4,265 wall picks/day</div></div>
+    <div class="kpi"><div class="kpi-label">Avg Picks / Bin / Day</div><div class="kpi-value">4.9</div><div class="kpi-sub">Across all active bins</div></div>
+    <div class="kpi red"><div class="kpi-label">Hotspot — PW01E085</div><div class="kpi-value">45.5/day</div><div class="kpi-sub">9× above average activity</div></div>
+    <div class="kpi orange"><div class="kpi-label">PW01E Row (top 5 bins)</div><div class="kpi-value">649 picks</div><div class="kpi-sub">162/day · disproportionate load</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Top 20 Busiest PW Bins — Avg Picks/Day (Jun 4–7)</h3>
+    <div class="chart-wrap tall"><canvas id="c-pw"></canvas></div>
+    <div class="insight alert"><strong>PW01 Row-E hotspot:</strong> Bins E085, E050, E020, E110, E135 show 22–46 picks/day vs a 4.9 average — up to 9× the fleet norm. These 5 bins account for 649 picks over 4 days. They likely represent dedicated exception/return processing slots or extremely high-velocity SKUs. <strong>Investigate before designing the mobile wall layout</strong> — if these are exceptions, they should be excluded from the mobile wall concept and handled at a fixed station.</div>
+  </div>
+
+  <div class="card">
+    <h3>Putwall Structure</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Wall</th><th>Sections</th><th>Est. Slots</th><th>Activity Level</th><th>Avg Picks/Bin/Day</th></tr></thead>
+        <tbody>
+          <tr><td>PW01</td><td>A, B, C, D (up to 155 positions each)</td><td>~620</td><td style="color:var(--green);font-weight:700;text-align:left">PRIMARY — very active</td><td>7–13</td></tr>
+          <tr><td>PW02</td><td>A, B, C, D (~66 positions each)</td><td>~264</td><td style="color:var(--yellow);font-weight:700;text-align:left">SECONDARY — moderate</td><td>2–5</td></tr>
+          <tr><td>PW03</td><td>B, C (sparse positions)</td><td>~100</td><td style="color:var(--muted);text-align:left">LOW — mostly inactive</td><td>0.2–2</td></tr>
+          <tr class="total"><td>TOTAL</td><td></td><td>~884 active</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight"><strong>Current capacity:</strong> PW01 carries ~70% of all wall activity. PW03 is barely used. In the mobile putwall design, PW01 capacity (620 slots) would translate to ~4 mobile walls of 150 slots each, covering one full wave at a time.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     RE-BIN DESIGN
+═══════════════════════════════════════════════════════════════ -->
+<div id="rebin" class="panel">
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Multi Orders / Day</div><div class="kpi-value">1,376</div><div class="kpi-sub">Avg Jun 4–7 (excludes singles &amp; B2B)</div></div>
+    <div class="kpi green"><div class="kpi-label">Recommended Slot Depth</div><div class="kpi-value">6 units</div><div class="kpi-sub">Covers 94.3% of all orders</div></div>
+    <div class="kpi orange"><div class="kpi-label">Avg Slot Occupancy</div><div class="kpi-value">4–8 hr</div><div class="kpi-sub">Median 5.8 hr · P90 9.4 hr</div></div>
+    <div class="kpi"><div class="kpi-label">Primary Feeder Zones</div><div class="kpi-value">3F · 2E</div><div class="kpi-sub">49% of all inventory pulled</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Concurrent Waves</div><div class="kpi-value">2–3</div><div class="kpi-sub">Min walls needed simultaneously</div></div>
+    <div class="kpi purple"><div class="kpi-label">Est. Walls Needed</div><div class="kpi-value">8–12</div><div class="kpi-sub">Full rotation fleet size</div></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>Wall Slot Sizing</h3>
+      <table>
+        <tr><th style="text-align:left">Metric</th><th>Value</th></tr>
+        <tr><td>Avg units/order</td><td>3.22</td></tr>
+        <tr><td>Median units/order</td><td>2</td></tr>
+        <tr><td>Orders with ≤4 units</td><td>86.6%</td></tr>
+        <tr><td>Orders with ≤6 units</td><td>94.3%</td></tr>
+        <tr><td>Orders with ≤10 units</td><td>98.2%</td></tr>
+        <tr><td>Recommended slot depth</td><td><strong>6 units</strong></td></tr>
+        <tr><td>Exception threshold</td><td>&gt;10 units</td></tr>
+        <tr><td>Exception volume</td><td>~1.8% of orders</td></tr>
+      </table>
+      <div class="insight" style="margin-top:10px"><strong>Design for 6:</strong> Covers 94% of orders. Build a fixed exception station for the 1.8% with 11–133 units — do not block a wall slot for outlier orders.</div>
+    </div>
+    <div class="card">
+      <h3>Wall Fleet Estimate</h3>
+      <table>
+        <tr><th style="text-align:left">Metric</th><th>Value</th></tr>
+        <tr><td>Orders per wave group</td><td>400–600</td></tr>
+        <tr><td>Concurrent active waves</td><td>2–3</td></tr>
+        <tr><td>Slots needed simultaneously</td><td>800–1,800</td></tr>
+        <tr><td>Slots per wall unit</td><td>150–200 (TBD)</td></tr>
+        <tr><td>Walls filling at one time</td><td>2–3</td></tr>
+        <tr><td>Walls at pack stations</td><td>2–3</td></tr>
+        <tr><td>Buffer / transition walls</td><td>2–4</td></tr>
+        <tr><td><strong>Total walls recommended</strong></td><td><strong>8–12</strong></td></tr>
+      </table>
+      <div class="insight" style="margin-top:10px"><strong>Rotation rule:</strong> 1 wall filling → 1 near-complete → 1–2 moving/at pack → 1 buffer. Add 1 extra wall per concurrent wave.</div>
+    </div>
+    <div class="card">
+      <h3>Flow Separation</h3>
+      <table>
+        <tr><th style="text-align:left">Order Type</th><th style="text-align:left">Wall?</th><th style="text-align:left">Volume/Day</th></tr>
+        <tr><td>B2C Multi</td><td style="color:var(--green);font-weight:700">YES — core</td><td>~1,376 orders</td></tr>
+        <tr><td>B2C Singles</td><td style="color:var(--red);font-weight:700">NO</td><td>~3,488 orders</td></tr>
+        <tr><td>B2B / OUT</td><td style="color:var(--red);font-weight:700">NO</td><td>~137 orders</td></tr>
+        <tr><td>STORE waves</td><td style="color:var(--orange);font-weight:700">TBD</td><td>~200–350 replen</td></tr>
+        <tr><td>PREZ / RUSH</td><td style="color:var(--orange);font-weight:700">TBD</td><td>Occasional</td></tr>
+        <tr><td>STUDIO</td><td style="color:var(--orange);font-weight:700">TBD</td><td>~180 replen/day</td></tr>
+        <tr><td>Clearance (CL)</td><td style="color:var(--orange);font-weight:700">TBD</td><td>Low</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>Zone-to-Wall Flow — Feeder Zone Breakdown</h3>
+      <div class="chart-wrap sm"><canvas id="c-rebin-zones"></canvas></div>
+      <div class="insight" style="margin-top:10px"><strong>Wall placement priority:</strong> Position the mobile wall staging area within 30–40 seconds of both 3F and 2E — they drive nearly 50% of all putaway scans.</div>
+    </div>
+    <div class="card-half">
+      <h3>Daily Pipeline — Replen Units by Type</h3>
+      <div class="chart-wrap sm"><canvas id="c-rebin-load"></canvas></div>
+      <div class="insight" style="margin-top:10px"><strong>Multi is consistently the largest replen component</strong> (2,816–4,445 units/day). Singles follow and are independent of the wall flow.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Open Design Questions</h3>
+    <div class="grid-3" style="margin-top:4px">
+      <div class="design-cell">
+        <div class="dlabel">Pack Stations</div>
+        <div class="dval">?</div>
+        <div class="dsub">How many stations will walls rotate to? Drives wall count and aisle width.</div>
+      </div>
+      <div class="design-cell">
+        <div class="dlabel">Slots per Wall Unit</div>
+        <div class="dval">150–200?</div>
+        <div class="dsub">Determines how many walls per wave. Affects floor footprint and move frequency.</div>
+      </div>
+      <div class="design-cell">
+        <div class="dlabel">Order Assignment Timing</div>
+        <div class="dval">At QM?</div>
+        <div class="dsub">When does a slot get assigned to a specific order? At wave creation or at first QM scan?</div>
+      </div>
+      <div class="design-cell">
+        <div class="dlabel">STORE / STUDIO Wall?</div>
+        <div class="dval">TBD</div>
+        <div class="dsub">~175–340 units/day. Small enough for a dedicated partial wall or separate rack.</div>
+      </div>
+      <div class="design-cell">
+        <div class="dlabel">Exception Lane</div>
+        <div class="dval">Needed</div>
+        <div class="dsub">1.8% of orders exceed 10 units (up to 133). Fixed station, not wall slot.</div>
+      </div>
+      <div class="design-cell">
+        <div class="dlabel">PW01E Hotspot</div>
+        <div class="dval">Investigate</div>
+        <div class="dsub">5 bins at 22–46 picks/day. Likely returns or exceptions — confirm before designing wall layout.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Zone-Order Composition Analysis ─────────────────────────────── -->
+  <hr class="sep">
+  <div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:16px">Zone-Order Composition Analysis &nbsp;<span style="font-weight:400;text-transform:none;color:var(--muted);font-size:11px">5,141 orders traced · 92% match rate</span></div>
+
+  <div class="kpi-row">
+    <div class="kpi green"><div class="kpi-label">Single-zone completable</div><div class="kpi-value">32.1%</div><div class="kpi-sub">1,652 orders — all units from 1 zone only</div></div>
+    <div class="kpi"><div class="kpi-label">2-zone orders</div><div class="kpi-value">42.8%</div><div class="kpi-sub">2,201 orders need exactly 2 zones</div></div>
+    <div class="kpi orange"><div class="kpi-label">3+ zone orders</div><div class="kpi-value">25.0%</div><div class="kpi-sub">1,288 orders cross 3 or more zones</div></div>
+    <div class="kpi purple"><div class="kpi-label">Top combo: 2E+3F</div><div class="kpi-value">14.9%</div><div class="kpi-sub">766 orders — 2 zones, highest single combo</div></div>
+    <div class="kpi yellow"><div class="kpi-label">3F zone presence</div><div class="kpi-value">57.9%</div><div class="kpi-sub">In 2,978 of all orders — most critical zone</div></div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>How Many Zones per Order?</h3>
+      <div class="chart-wrap"><canvas id="c-zone-dist"></canvas></div>
+      <div class="insight"><strong>75% of orders need only 1–2 zones</strong> to be complete. 32% need just 1 zone — a single picker pass fills the entire slot. Only 4% of orders cross 4+ zones.</div>
+    </div>
+    <div class="card-half">
+      <h3>Single-Zone Completable Orders — by Zone</h3>
+      <div class="chart-wrap"><canvas id="c-single-zone"></canvas></div>
+      <div class="insight"><strong>3F dominates single-zone completions (600 orders, 11.7%).</strong> These are wall slots a single 3F picker can fill without waiting for any other zone. 2E follows at 340 (6.6%).</div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card-half">
+      <h3>Zone Presence — Solo vs. Shared Orders</h3>
+      <div class="chart-wrap"><canvas id="c-zone-presence"></canvas></div>
+      <div class="insight"><strong>3F appears in 57.9% of all multi orders</strong> (2,978). Green = orders where that zone is the only zone. Blue = orders where that zone shares with others. A single absent 3F picker stalls nearly 60% of wall slots.</div>
+    </div>
+    <div class="card-half">
+      <h3>Top 10 Two-Zone Combinations</h3>
+      <div class="chart-wrap"><canvas id="c-pair-zones"></canvas></div>
+      <div class="insight"><strong>2E+3F is the dominant pair at 14.9%</strong> (766 orders). The top 6 two-zone pairs cover 18.7% of all orders. Batching replen by these pairs could pre-stage ~1,000 orders/day with only 2 picker zones active.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Top 15 Zone Combinations — Orders &amp; Cumulative Coverage</h3>
+    <div class="chart-wrap tall"><canvas id="c-combos"></canvas></div>
+    <div class="insight"><strong>Top 6 combinations cover 49% of all orders. Top 13 cover 63%.</strong> The remaining 37% spans 100+ unique zone combinations — these are the complex orders that justify the putwall. For Re-bin batch design: organizing replenishment around the top 6 combos lets you complete ~50% of wall slots with predictable, repeatable zone routing.</div>
+  </div>
+
+</div>
+</main>
+
+<footer>Jun 4–7, 2026 &nbsp;·&nbsp; 403,150 MD WMS events &nbsp;·&nbsp; Working hours: 08:00–18:30 minus 2×30 min breaks &nbsp;·&nbsp; Generated 2026-06-09</footer>
+
+<script>
+Chart.defaults.font.family='-apple-system,Segoe UI,Helvetica,Arial,sans-serif';
+Chart.defaults.font.size=11;
+Chart.defaults.color='#70757a';
+
+const DAYS=['Jun 4','Jun 5','Jun 6','Jun 7'];
+const C={
+  blue:'#2a5298',blue2:'#1a3a5c',accent:'#1a73e8',
+  green:'#1e8e3e',green2:'#34a853',green3:'#81c995',
+  orange:'#e37400',red:'#c5221f',yellow:'#f9ab00',
+  purple:'#7c4dff',teal:'#00897b'
+};
+
+// ── 1. Daily Volume ──────────────────────────────────────────────────────
+new Chart(document.getElementById('c-daily-vol'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Multi Units',data:[4843,4685,4225,3929],backgroundColor:C.blue,borderRadius:4},
+    {label:'Single Units',data:[3767,3386,2854,3957],backgroundColor:C.green,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{x:{stacked:false},y:{beginAtZero:true,title:{display:true,text:'Units Packed'}}}}
+});
+
+// ── 2. Daily Replenishment ────────────────────────────────────────────────
+new Chart(document.getElementById('c-daily-repl'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Multi Replen',data:[4445,4383,3135,2816],backgroundColor:C.blue,borderRadius:3},
+    {label:'Singles Replen',data:[2970,3363,2084,3295],backgroundColor:C.green,borderRadius:3},
+    {label:'Store / Other',data:[2,189,516,242],backgroundColor:C.purple,borderRadius:3}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Units'}}}}
+});
+
+// ── 3. Zone share horizontal bar ─────────────────────────────────────────
+new Chart(document.getElementById('c-zone-share'),{
+  type:'bar',
+  data:{
+    labels:['3F','2E','2H','1G','3H','1H','1Y','1A','1B','1C'],
+    datasets:[{
+      label:'% of Total',
+      data:[25.8,22.7,13.8,10.8,10.5,9.9,4.6,1.0,0.7,0.2],
+      backgroundColor:[C.blue2,C.blue,C.accent,'#34a853','#1e8e3e','#81c995',C.teal,'#b0bec5','#cfd8dc','#eceff1'],
+      borderRadius:4
+    }]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw}%`}}},
+    scales:{x:{beginAtZero:true,max:30,ticks:{callback:v=>v+'%'},
+      title:{display:true,text:'% of Total Replen'}}}}
+});
+
+// ── 4. Zone by day stacked ────────────────────────────────────────────────
+new Chart(document.getElementById('c-zone-daily'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'3F',data:[2190,2131,1323,1431],backgroundColor:C.blue2,borderRadius:2},
+    {label:'2E',data:[1630,1873,1265,1453],backgroundColor:C.blue,borderRadius:2},
+    {label:'2H',data:[690,1498,633,957],backgroundColor:C.accent,borderRadius:2},
+    {label:'1G',data:[965,665,612,731],backgroundColor:C.green,borderRadius:2},
+    {label:'3H',data:[958,621,693,619],backgroundColor:C.green2,borderRadius:2},
+    {label:'1H',data:[571,903,714,532],backgroundColor:C.green3,borderRadius:2}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10}}},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Units'}}}}
+});
+
+// ── 5. Multi CT by day ────────────────────────────────────────────────────
+new Chart(document.getElementById('c-ct-multi'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Avg (hr)',data:[3.7,6.1,7.6,7.3],backgroundColor:C.blue,borderRadius:4},
+    {label:'Median (hr)',data:[4.0,6.1,7.2,6.3],backgroundColor:C.accent,borderRadius:4},
+    {label:'P90 (hr)',data:[6.2,9.0,10.1,12.8],backgroundColor:C.yellow,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Working Hours'},
+      ticks:{callback:v=>v+' hr'}}}}
+});
+
+// ── 6. B2B CT by day ──────────────────────────────────────────────────────
+new Chart(document.getElementById('c-ct-b2b'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Avg (hr)',data:[2.7,3.4,5.1,3.0],backgroundColor:C.orange,borderRadius:4},
+    {label:'Median (hr)',data:[2.1,2.2,3.5,3.1],backgroundColor:C.yellow,borderRadius:4},
+    {label:'P90 (hr)',data:[6.6,9.9,11.2,5.7],backgroundColor:C.red,borderRadius:4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Working Hours'},
+      ticks:{callback:v=>v+' hr'}}}}
+});
+
+// ── 7. Multi CT distribution ──────────────────────────────────────────────
+new Chart(document.getElementById('c-ct-dist'),{
+  type:'bar',
+  data:{
+    labels:['< 30 min','30–60 min','1–2 hr','2–4 hr','4–8 hr','> 8 hr'],
+    datasets:[{
+      label:'Multi Orders',
+      data:[261,16,119,876,2997,1214],
+      backgroundColor:[C.green,C.teal,C.accent,C.blue,C.purple,C.red],
+      borderRadius:4
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{
+      label:c=>{
+        const tot=261+16+119+876+2997+1214;
+        return ` ${c.raw.toLocaleString()} orders (${(c.raw/tot*100).toFixed(1)}%)`;
+      }
+    }}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Orders'}}}}
+});
+
+// ── 8. Basket size ────────────────────────────────────────────────────────
+const bLabels=['1','2','3','4','5','6','7','8','9','10','>10'];
+const bPct=[6.2,49.1,20.9,10.4,4.8,2.9,1.6,1.2,0.7,0.4,1.8];
+const bCumul=[6.2,55.3,76.2,86.6,91.4,94.3,95.9,97.1,97.8,98.2,100];
+new Chart(document.getElementById('c-basket'),{
+  type:'bar',
+  data:{labels:bLabels,datasets:[
+    {label:'% of Orders',data:bPct,backgroundColor:C.blue,borderRadius:3,yAxisID:'y'},
+    {label:'Cumulative %',data:bCumul,type:'line',borderColor:C.orange,
+     backgroundColor:'transparent',pointRadius:3,borderWidth:2.5,yAxisID:'y2',tension:.3}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{
+      x:{title:{display:true,text:'Units per Order'}},
+      y:{beginAtZero:true,max:55,title:{display:true,text:'% of Orders'},ticks:{callback:v=>v+'%'}},
+      y2:{beginAtZero:true,max:110,position:'right',grid:{drawOnChartArea:false},
+        ticks:{callback:v=>v+'%'}}
+    }}
+});
+
+// ── 9. Wave stacked ───────────────────────────────────────────────────────
+new Chart(document.getElementById('c-wave-stack'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Multi',data:[4445,4383,3135,2816],backgroundColor:C.blue,borderRadius:3},
+    {label:'Singles',data:[2970,3363,2084,3295],backgroundColor:C.green,borderRadius:3},
+    {label:'Store/B2B',data:[0,0,341,233],backgroundColor:C.red,borderRadius:3},
+    {label:'Special/Studio',data:[2,189,175,9],backgroundColor:C.orange,borderRadius:3}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Replen Units'}}}}
+});
+
+// ── 10. Per-day wave donuts ───────────────────────────────────────────────
+function waveDonut(id,labels,data,colors){
+  new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:9,padding:6}}}}
+  });
+}
+waveDonut('c-wg4',
+  ['03MULTI-02','04MULTI-01','04-SINGLE','03-SINGLE','03MULTI-01'],
+  [2770,1531,2638,332,144],
+  [C.blue,'#4285f4',C.green,C.green2,'#8ab4f8']);
+waveDonut('c-wg5',
+  ['04-SINGLE','05MULTI-01','06MULTI-01','05-STUDIO'],
+  [3360,2461,1920,187],
+  [C.green,C.blue,'#4285f4',C.orange]);
+waveDonut('c-wg6',
+  ['06-MULTI-0','06-SINGLE','07MULTI-01','06-STORE','06MULTI-01','05-STUDIO'],
+  [2369,2083,560,341,206,175],
+  [C.blue,C.green,'#4285f4',C.red,'#8ab4f8',C.orange]);
+waveDonut('c-wg7',
+  ['06-SINGLE','07MULTI-01','08-MULTI','07-STORE','06MULTI-CL'],
+  [3295,2052,691,233,23],
+  [C.green,C.blue,'#4285f4',C.red,C.purple]);
+
+// ── 11. Putwall top 20 ────────────────────────────────────────────────────
+const pwLabels=['PW01E085','PW01E050','PW01E020','PW01E110','PW01E135',
+  'PW02D001','PW01D145','PW03B101','PW01C098','PW01B151',
+  'PW01C097','PW03B139','PW01C088','PW01C152','PW02C049',
+  'PW01C067','PW01C057','PW01A087','PW01C106','PW01C062'];
+const pwVals=[45.5,36.8,31.0,26.8,22.2,18.0,17.2,16.5,16.2,15.5,
+  15.5,15.2,15.2,14.8,14.2,14.0,14.0,14.0,13.8,13.5];
+const pwColors=pwVals.map(v=>v>30?C.red:v>20?C.orange:C.accent);
+new Chart(document.getElementById('c-pw'),{
+  type:'bar',
+  data:{labels:pwLabels,datasets:[{
+    label:'Avg Picks/Day',data:pwVals,
+    backgroundColor:pwColors,borderRadius:4
+  }]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} picks/day`}}},
+    scales:{x:{beginAtZero:true,title:{display:true,text:'Avg Picks / Day'}}}}
+});
+
+// ── 12. Re-bin zone donut ─────────────────────────────────────────────────
+new Chart(document.getElementById('c-rebin-zones'),{
+  type:'doughnut',
+  data:{
+    labels:['3F (26%)','2E (23%)','2H (14%)','1G (11%)','3H (11%)','1H (10%)','1Y (5%)','Other'],
+    datasets:[{
+      data:[25.8,22.7,13.8,10.8,10.5,9.9,4.6,1.9],
+      backgroundColor:[C.blue2,C.blue,C.accent,C.green,C.green2,C.green3,C.teal,'#cfd8dc'],
+      borderWidth:2,borderColor:'#fff'
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'50%',
+    plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:8,padding:5}}}}
+});
+
+// ── 13. Re-bin daily load ─────────────────────────────────────────────────
+new Chart(document.getElementById('c-rebin-load'),{
+  type:'bar',
+  data:{labels:DAYS,datasets:[
+    {label:'Multi',data:[4445,4383,3135,2816],backgroundColor:C.blue,borderRadius:3},
+    {label:'Singles',data:[2970,3363,2084,3295],backgroundColor:C.green,borderRadius:3},
+    {label:'Store/Other',data:[2,189,516,242],backgroundColor:C.purple,borderRadius:3}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{font:{size:10}}}},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}
+});
+
+// ── Zone per order distribution (donut) ──────────────────────────────────
+new Chart(document.getElementById('c-zone-dist'),{
+  type:'doughnut',
+  data:{
+    labels:['1 zone — 32.1%','2 zones — 42.8%','3 zones — 14.6%','4 zones — 6.6%','5+ zones — 3.8%'],
+    datasets:[{
+      data:[1652,2201,753,338,197],
+      backgroundColor:[C.green,C.blue,C.accent,C.orange,C.red],
+      borderWidth:2,borderColor:'#fff'
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+    plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10,padding:8}},
+      tooltip:{callbacks:{label:c=>{const tot=5141;return ` ${c.raw.toLocaleString()} orders (${(c.raw/tot*100).toFixed(1)}%)`;}}}
+    }}
+});
+
+// ── Single-zone completable per zone ─────────────────────────────────────
+new Chart(document.getElementById('c-single-zone'),{
+  type:'bar',
+  data:{
+    labels:['3F','2E','1G','2H','1H','3H','1Y','1B','1A'],
+    datasets:[{
+      label:'Orders (all units from this zone only)',
+      data:[600,340,248,156,121,116,49,14,7],
+      backgroundColor:[C.blue2,C.blue,C.green,C.accent,C.green2,C.teal,C.purple,C.yellow,C.orange],
+      borderRadius:4
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)}% of total)`}}
+    },
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Orders (single-zone only)'}}}}
+});
+
+// ── Zone presence: solo vs shared (stacked bar) ───────────────────────────
+new Chart(document.getElementById('c-zone-presence'),{
+  type:'bar',
+  data:{
+    labels:['3F','2E','1H','1G','2H','3H','1Y','1A','1B'],
+    datasets:[
+      {label:'Solo (only this zone)',data:[600,340,121,248,156,116,49,7,14],backgroundColor:C.green,borderRadius:2},
+      {label:'Shared (this zone + others)',data:[2378,2217,1263,879,839,800,399,168,101],backgroundColor:C.blue,borderRadius:2}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Orders'}}}}
+});
+
+// ── Top 10 two-zone pairs ─────────────────────────────────────────────────
+new Chart(document.getElementById('c-pair-zones'),{
+  type:'bar',
+  data:{
+    labels:['2E+3F','1H+3F','1H+2E','2H+3H','1G+3F','1G+2E','2E+2H','2H+3F','3F+3H','2E+3H'],
+    datasets:[{
+      label:'Orders',
+      data:[766,208,148,118,111,106,82,81,81,69],
+      backgroundColor:C.purple,borderRadius:4
+    }]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)}%)`}}
+    },
+    scales:{x:{beginAtZero:true,title:{display:true,text:'Orders'}}}}
+});
+
+// ── Top 15 combinations with cumulative line ──────────────────────────────
+new Chart(document.getElementById('c-combos'),{
+  type:'bar',
+  data:{
+    labels:['2E+3F','3F only','2E only','1G only','1H+2E+3F','1H+3F','2H only','1H+2E','1H only','2H+3H','3H only','1G+3F','1G+2E','2E+2H','3F+3H'],
+    datasets:[
+      {label:'Orders',data:[766,600,340,248,213,208,156,148,121,118,116,111,106,82,81],
+       backgroundColor:[C.purple,C.blue2,C.blue,C.green,C.red,C.orange,C.accent,C.orange,C.green,C.yellow,C.green2,C.blue,C.blue,C.teal,C.blue2],
+       borderRadius:4,yAxisID:'y'},
+      {label:'Cumulative %',data:[14.9,26.6,33.2,38.0,42.1,46.1,49.1,52.0,54.4,56.7,59.0,61.2,63.3,64.9,66.5],
+       type:'line',borderColor:C.yellow,backgroundColor:'transparent',
+       pointRadius:4,borderWidth:2.5,yAxisID:'y2',tension:.3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top'},
+      tooltip:{callbacks:{label:c=>c.datasetIndex===0?` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)})`:` Cumul: ${c.raw}%`}}
+    },
+    scales:{
+      y:{beginAtZero:true,title:{display:true,text:'Orders'}},
+      y2:{min:0,max:100,position:'right',grid:{drawOnChartArea:false},
+        title:{display:true,text:'Cumulative %'},ticks:{callback:v=>v+'%'}}
+    }}
+});
+
+// ── Tab navigation ────────────────────────────────────────────────────────
+function showTab(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
