@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Operations Dashboard — Jun 4–7, 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root{
   --blue:#1a3a5c;--blue2:#2a5298;--accent:#1a73e8;
@@ -421,8 +422,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-t
 <div id="rebin" class="panel">
 
   <div class="kpi-row">
-    <div class="kpi"><div class="kpi-label">Multi Orders / Day</div><div class="kpi-value">1,376</div><div class="kpi-sub">Avg Jun 4–7 (excludes singles &amp; B2B)</div></div>
-    <div class="kpi green"><div class="kpi-label">Recommended Slot Depth</div><div class="kpi-value">6 units</div><div class="kpi-sub">Covers 94.3% of all orders</div></div>
+    <div class="kpi"><div class="kpi-label">Multi Orders / Day</div><div class="kpi-value">1,250</div><div class="kpi-sub">Avg May 20–Jun 7, 12 full days</div></div>
+    <div class="kpi green"><div class="kpi-label">Recommended Slot Depth</div><div class="kpi-value">6 units</div><div class="kpi-sub">Covers 93.9% of all orders</div></div>
     <div class="kpi orange"><div class="kpi-label">Avg Slot Occupancy</div><div class="kpi-value">4–8 hr</div><div class="kpi-sub">Median 5.8 hr · P90 9.4 hr</div></div>
     <div class="kpi"><div class="kpi-label">Primary Feeder Zones</div><div class="kpi-value">3F · 2E</div><div class="kpi-sub">49% of all inventory pulled</div></div>
     <div class="kpi yellow"><div class="kpi-label">Concurrent Waves</div><div class="kpi-value">2–3</div><div class="kpi-sub">Min walls needed simultaneously</div></div>
@@ -434,14 +435,14 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-t
       <h3>Wall Slot Sizing</h3>
       <table>
         <tr><th style="text-align:left">Metric</th><th>Value</th></tr>
-        <tr><td>Avg units/order</td><td>3.22</td></tr>
+        <tr><td>Avg units/order</td><td>3.32</td></tr>
         <tr><td>Median units/order</td><td>2</td></tr>
-        <tr><td>Orders with ≤4 units</td><td>86.6%</td></tr>
-        <tr><td>Orders with ≤6 units</td><td>94.3%</td></tr>
-        <tr><td>Orders with ≤10 units</td><td>98.2%</td></tr>
+        <tr><td>Orders with ≤4 units</td><td>85.7%</td></tr>
+        <tr><td>Orders with ≤6 units</td><td>93.9%</td></tr>
+        <tr><td>Orders with ≤10 units</td><td>97.9%</td></tr>
         <tr><td>Recommended slot depth</td><td><strong>6 units</strong></td></tr>
         <tr><td>Exception threshold</td><td>&gt;10 units</td></tr>
-        <tr><td>Exception volume</td><td>~1.8% of orders</td></tr>
+        <tr><td>Exception volume</td><td>~2.1% of orders</td></tr>
       </table>
       <div class="insight" style="margin-top:10px"><strong>Design for 6:</strong> Covers 94% of orders. Build a fixed exception station for the 1.8% with 11–133 units — do not block a wall slot for outlier orders.</div>
     </div>
@@ -464,7 +465,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-t
       <h3>Flow Separation</h3>
       <table>
         <tr><th style="text-align:left">Order Type</th><th style="text-align:left">Wall?</th><th style="text-align:left">Volume/Day</th></tr>
-        <tr><td>B2C Multi</td><td style="color:var(--green);font-weight:700">YES — core</td><td>~1,376 orders</td></tr>
+        <tr><td>B2C Multi</td><td style="color:var(--green);font-weight:700">YES — core</td><td>~1,250 orders/day</td></tr>
         <tr><td>B2C Singles</td><td style="color:var(--red);font-weight:700">NO</td><td>~3,488 orders</td></tr>
         <tr><td>B2B / OUT</td><td style="color:var(--red);font-weight:700">NO</td><td>~137 orders</td></tr>
         <tr><td>STORE waves</td><td style="color:var(--orange);font-weight:700">TBD</td><td>~200–350 replen</td></tr>
@@ -524,28 +525,105 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-t
     </div>
   </div>
 
+  <!-- ── Zone Group Composition Table ─────────────────────────────────── -->
+  <hr class="sep">
+  <div class="card">
+    <h3>Zone Group Analysis — Product Type &amp; Storage Consolidation</h3>
+    <div class="insight" style="margin-bottom:14px">If inventory is fully organized by product type into their storage zones, this shows how much replenishment volume and how many orders each zone group owns. An order is <strong>zone-group completable</strong> if all its units come exclusively from that group's zones.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left">Zone Group</th>
+            <th style="text-align:left">Product Type</th>
+            <th style="text-align:left">Storage</th>
+            <th style="text-align:left">Physical Zones</th>
+            <th>Replen Units</th>
+            <th>% of Total Volume</th>
+            <th>Orders (ZG-only)</th>
+            <th>% of Orders</th>
+            <th>Zone Presence</th>
+          </tr>
+          <tr style="background:#f8f9fa">
+            <th colspan="4" style="font-weight:400;color:var(--muted);font-size:10px;text-align:left;font-style:italic;text-transform:none;letter-spacing:0">How to read this table: each row shows what one zone group owns if inventory is organized by product type.</th>
+            <th style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;white-space:normal;min-width:80px">Total units picked from this group's zones across all 13 days</th>
+            <th style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;white-space:normal">Share of all 76,138 replen units this zone group handles</th>
+            <th style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;white-space:normal">Orders where every unit came from this zone group only — no other zone needed</th>
+            <th style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;white-space:normal">Share of all 16,928 multi orders that are fully self-contained within this zone</th>
+            <th style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;white-space:normal">Orders that include at least one pick from this zone — even if other zones are also needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:var(--blue)">Zone 1</strong></td>
+            <td>FLATS + SMALL</td>
+            <td><span class="badge single">Shelving</span></td>
+            <td><span class="wg-tag wg-single" style="font-size:10px">3F</span> <span class="wg-tag wg-single" style="font-size:10px">2E</span> <span class="wg-tag wg-single" style="font-size:10px">1H</span> <span class="wg-tag wg-single" style="font-size:10px">1G</span></td>
+            <td>51,839</td>
+            <td><strong style="color:var(--green)">68.1%</strong></td>
+            <td>~7,900</td>
+            <td><strong style="color:var(--green)">~47%</strong></td>
+            <td>~92% of orders</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--orange)">Zone 2</strong></td>
+            <td>BOXED + BULKY</td>
+            <td><span class="badge special">Racking</span></td>
+            <td><span class="wg-tag wg-special" style="font-size:10px">2H</span> <span class="wg-tag wg-special" style="font-size:10px">3H</span> <span class="wg-tag wg-special" style="font-size:10px">1A</span> <span class="wg-tag wg-special" style="font-size:10px">1Y</span></td>
+            <td>23,194</td>
+            <td><strong>30.5%</strong></td>
+            <td>~1,330</td>
+            <td>~8%</td>
+            <td>~55% of orders</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--purple)">Zone 3</strong></td>
+            <td>OTHER</td>
+            <td><span class="badge cl">Racking</span></td>
+            <td><span class="wg-tag wg-cl" style="font-size:10px">1C</span> <span class="wg-tag wg-cl" style="font-size:10px">1B</span></td>
+            <td>1,105</td>
+            <td><strong>1.5%</strong></td>
+            <td>~61</td>
+            <td>&lt;1%</td>
+            <td>~14% of orders</td>
+          </tr>
+          <tr class="total">
+            <td colspan="4">All zones classified — no overlap (Zone 1 + Zone 2 + Zone 3)</td>
+            <td>76,138</td>
+            <td>100%</td>
+            <td>~9,300</td>
+            <td>~55%</td>
+            <td>All orders covered</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight green" style="margin-top:12px;background:#e6f4ea;border-left-color:var(--green)"><strong>Clean zone separation:</strong> With 3H exclusively in Zone 2, there is now zero overlap between zone groups. Zone 1 (Shelving: 3F+2E+1H+1G) covers 68.1% of replenishment volume and ~47% of orders are completable from shelving alone. Zone 2 (Racking: 2H+3H+1A+1Y) handles the remaining 30.5%.</div>
+    <div class="insight" style="margin-top:8px"><strong>Note on estimates:</strong> Zone-group completability figures (~47%, ~8%) are approximated from combination frequency data across 16,928 orders. Exact values require a full re-run of the zone-order analysis with the updated zone group definitions.</div>
+  </div>
+
   <!-- ── Zone-Order Composition Analysis ─────────────────────────────── -->
   <hr class="sep">
-  <div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:16px">Zone-Order Composition Analysis &nbsp;<span style="font-weight:400;text-transform:none;color:var(--muted);font-size:11px">5,141 orders traced · 92% match rate</span></div>
+  <div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:16px">Zone-Order Composition Analysis &nbsp;<span style="font-weight:400;text-transform:none;color:var(--muted);font-size:11px">16,928 orders traced · 99.9% match rate · all CSVs May 20–Jun 7</span></div>
 
   <div class="kpi-row">
-    <div class="kpi green"><div class="kpi-label">Single-zone completable</div><div class="kpi-value">32.1%</div><div class="kpi-sub">1,652 orders — all units from 1 zone only</div></div>
-    <div class="kpi"><div class="kpi-label">2-zone orders</div><div class="kpi-value">42.8%</div><div class="kpi-sub">2,201 orders need exactly 2 zones</div></div>
-    <div class="kpi orange"><div class="kpi-label">3+ zone orders</div><div class="kpi-value">25.0%</div><div class="kpi-sub">1,288 orders cross 3 or more zones</div></div>
-    <div class="kpi purple"><div class="kpi-label">Top combo: 2E+3F</div><div class="kpi-value">14.9%</div><div class="kpi-sub">766 orders — 2 zones, highest single combo</div></div>
-    <div class="kpi yellow"><div class="kpi-label">3F zone presence</div><div class="kpi-value">57.9%</div><div class="kpi-sub">In 2,978 of all orders — most critical zone</div></div>
+    <div class="kpi green"><div class="kpi-label">Single-zone completable</div><div class="kpi-value">23.9%</div><div class="kpi-sub">4,052 orders — all units from 1 zone only</div></div>
+    <div class="kpi"><div class="kpi-label">2-zone orders</div><div class="kpi-value">34.7%</div><div class="kpi-sub">5,881 orders need exactly 2 zones</div></div>
+    <div class="kpi orange"><div class="kpi-label">3+ zone orders</div><div class="kpi-value">41.4%</div><div class="kpi-sub">6,995 orders cross 3 or more zones</div></div>
+    <div class="kpi purple"><div class="kpi-label">Top combo: 2E+3F</div><div class="kpi-value">11.8%</div><div class="kpi-sub">1,997 orders — dominant 2-zone pair</div></div>
+    <div class="kpi yellow"><div class="kpi-label">3F zone presence</div><div class="kpi-value">65.7%</div><div class="kpi-sub">In 11,128 of all orders — most critical zone</div></div>
   </div>
 
   <div class="card-row">
     <div class="card-half">
       <h3>How Many Zones per Order?</h3>
       <div class="chart-wrap"><canvas id="c-zone-dist"></canvas></div>
-      <div class="insight"><strong>75% of orders need only 1–2 zones</strong> to be complete. 32% need just 1 zone — a single picker pass fills the entire slot. Only 4% of orders cross 4+ zones.</div>
+      <div class="insight"><strong>58.6% of orders need only 1–2 zones.</strong> 23.9% need just 1 zone — a single picker fills the entire slot. 41.4% cross 3+ zones, and 27% cross 5+ — these are the complex orders that justify the putwall concept.</div>
     </div>
     <div class="card-half">
       <h3>Single-Zone Completable Orders — by Zone</h3>
       <div class="chart-wrap"><canvas id="c-single-zone"></canvas></div>
-      <div class="insight"><strong>3F dominates single-zone completions (600 orders, 11.7%).</strong> These are wall slots a single 3F picker can fill without waiting for any other zone. 2E follows at 340 (6.6%).</div>
+      <div class="insight"><strong>3F dominates single-zone completions: 1,336 orders (7.9%).</strong> These wall slots a single 3F picker fills entirely — no waiting on other zones. 2E follows at 924 (5.5%), 1G at 666 (3.9%).</div>
     </div>
   </div>
 
@@ -553,19 +631,19 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-t
     <div class="card-half">
       <h3>Zone Presence — Solo vs. Shared Orders</h3>
       <div class="chart-wrap"><canvas id="c-zone-presence"></canvas></div>
-      <div class="insight"><strong>3F appears in 57.9% of all multi orders</strong> (2,978). Green = orders where that zone is the only zone. Blue = orders where that zone shares with others. A single absent 3F picker stalls nearly 60% of wall slots.</div>
+      <div class="insight"><strong>3F appears in 65.7% of all multi orders</strong> (11,128). 2E in 62.3% (10,551). Green = that zone alone fills the slot. Blue = shared with other zones. An absent 3F picker directly stalls nearly two-thirds of all wall slots.</div>
     </div>
     <div class="card-half">
       <h3>Top 10 Two-Zone Combinations</h3>
       <div class="chart-wrap"><canvas id="c-pair-zones"></canvas></div>
-      <div class="insight"><strong>2E+3F is the dominant pair at 14.9%</strong> (766 orders). The top 6 two-zone pairs cover 18.7% of all orders. Batching replen by these pairs could pre-stage ~1,000 orders/day with only 2 picker zones active.</div>
+      <div class="insight"><strong>2E+3F is the dominant pair at 11.8%</strong> (1,997 orders). Top 10 two-zone pairs together cover 25.8% of all orders. Batching replen by zone pairs could pre-stage roughly 1 in 4 slots with just 2 pickers active.</div>
     </div>
   </div>
 
   <div class="card">
     <h3>Top 15 Zone Combinations — Orders &amp; Cumulative Coverage</h3>
     <div class="chart-wrap tall"><canvas id="c-combos"></canvas></div>
-    <div class="insight"><strong>Top 6 combinations cover 49% of all orders. Top 13 cover 63%.</strong> The remaining 37% spans 100+ unique zone combinations — these are the complex orders that justify the putwall. For Re-bin batch design: organizing replenishment around the top 6 combos lets you complete ~50% of wall slots with predictable, repeatable zone routing.</div>
+    <div class="insight"><strong>Top 4 simple combos cover 29% of all orders. Top 12 cover ~50%. Top 13 cover 53.6%.</strong> The remaining 46% spans 100+ unique zone combinations. Note: the 5–8 zone combinations (#5, #8, #12, #14) represent genuine complex orders where units come from 6–8 different zones — these are the orders that make the putwall hardest to optimise. Based on 16,928 orders across all 27 CSV files.</div>
   </div>
 
 </div>
@@ -775,120 +853,149 @@ new Chart(document.getElementById('c-pw'),{
     scales:{x:{beginAtZero:true,title:{display:true,text:'Avg Picks / Day'}}}}
 });
 
+// ── helpers for datalabels (Re-bin tab only) ─────────────────────────────
+const dlDonut={display:true,color:'#fff',font:{weight:'bold',size:11},
+  formatter:(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const p=(v/t*100).toFixed(1);return parseFloat(p)>=5?p+'%':''}};
+const dlBar={display:true,anchor:'end',align:'top',color:'#202124',font:{size:9,weight:'600'},
+  formatter:v=>v>0?v.toLocaleString():''};
+const dlBarH={display:true,anchor:'end',align:'right',color:'#202124',font:{size:9,weight:'600'},
+  padding:{right:4},formatter:v=>v>0?v.toLocaleString():''};
+const dlStack={display:true,anchor:'center',align:'center',color:'#fff',font:{size:9},
+  formatter:v=>v>=800?v.toLocaleString():''};
+
 // ── 12. Re-bin zone donut ─────────────────────────────────────────────────
 new Chart(document.getElementById('c-rebin-zones'),{
   type:'doughnut',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['3F (26%)','2E (23%)','2H (14%)','1G (11%)','3H (11%)','1H (10%)','1Y (5%)','Other'],
+    labels:['3F (25%)','2E (23%)','3H (13%)','2H (12%)','1G (12%)','1H (9%)','1Y (4%)','Other'],
     datasets:[{
-      data:[25.8,22.7,13.8,10.8,10.5,9.9,4.6,1.9],
+      data:[24.9,22.6,13.0,12.1,11.6,8.9,4.3,2.6],
       backgroundColor:[C.blue2,C.blue,C.accent,C.green,C.green2,C.green3,C.teal,'#cfd8dc'],
       borderWidth:2,borderColor:'#fff'
     }]
   },
   options:{responsive:true,maintainAspectRatio:false,cutout:'50%',
-    plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:8,padding:5}}}}
+    plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:8,padding:5}},datalabels:dlDonut}}
 });
 
-// ── 13. Re-bin daily load ─────────────────────────────────────────────────
+// ── 13. Re-bin daily load — all 13 days ──────────────────────────────────
 new Chart(document.getElementById('c-rebin-load'),{
   type:'bar',
-  data:{labels:DAYS,datasets:[
-    {label:'Multi',data:[4445,4383,3135,2816],backgroundColor:C.blue,borderRadius:3},
-    {label:'Singles',data:[2970,3363,2084,3295],backgroundColor:C.green,borderRadius:3},
-    {label:'Store/Other',data:[2,189,516,242],backgroundColor:C.purple,borderRadius:3}
-  ]},
+  plugins:[ChartDataLabels],
+  data:{
+    labels:['May 20','May 25','May 26','May 27','May 30','May 31','Jun 1','Jun 2','Jun 3','Jun 4','Jun 5','Jun 6','Jun 7'],
+    datasets:[
+      {label:'Multi',data:[2478,4425,4422,4861,5661,4488,3419,3876,4469,4843,4685,4225,3929],backgroundColor:C.blue,borderRadius:2},
+      {label:'Singles',data:[3217,1278,1956,2391,1129,1797,1378,1186,4498,3767,3386,2854,3957],backgroundColor:C.green,borderRadius:2}
+    ]
+  },
   options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'top',labels:{font:{size:10}}}},
-    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}
+    plugins:{legend:{position:'top',labels:{font:{size:10}}},datalabels:dlStack},
+    scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Units packed'}}}}
 });
 
 // ── Zone per order distribution (donut) ──────────────────────────────────
 new Chart(document.getElementById('c-zone-dist'),{
   type:'doughnut',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['1 zone — 32.1%','2 zones — 42.8%','3 zones — 14.6%','4 zones — 6.6%','5+ zones — 3.8%'],
+    labels:['1 zone — 23.9%','2 zones — 34.7%','3 zones — 9.7%','4 zones — 4.6%','5+ zones — 27.1%'],
     datasets:[{
-      data:[1652,2201,753,338,197],
+      data:[4052,5881,1638,782,4575],
       backgroundColor:[C.green,C.blue,C.accent,C.orange,C.red],
       borderWidth:2,borderColor:'#fff'
     }]
   },
   options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-    plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10,padding:8}},
-      tooltip:{callbacks:{label:c=>{const tot=5141;return ` ${c.raw.toLocaleString()} orders (${(c.raw/tot*100).toFixed(1)}%)`;}}}
+    plugins:{
+      legend:{position:'right',labels:{font:{size:11},boxWidth:10,padding:8}},
+      tooltip:{callbacks:{label:c=>{const tot=16928;return ` ${c.raw.toLocaleString()} orders (${(c.raw/tot*100).toFixed(1)}%)`}}},
+      datalabels:dlDonut
     }}
 });
 
 // ── Single-zone completable per zone ─────────────────────────────────────
 new Chart(document.getElementById('c-single-zone'),{
   type:'bar',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['3F','2E','1G','2H','1H','3H','1Y','1B','1A'],
+    labels:['3F','2E','1G','3H','2H','1H','1Y','1B','1A'],
     datasets:[{
       label:'Orders (all units from this zone only)',
-      data:[600,340,248,156,121,116,49,14,7],
-      backgroundColor:[C.blue2,C.blue,C.green,C.accent,C.green2,C.teal,C.purple,C.yellow,C.orange],
+      data:[1336,924,666,388,354,207,96,53,24],
+      backgroundColor:[C.blue2,C.blue,C.green,C.green2,C.accent,C.teal,C.purple,C.yellow,C.orange],
       borderRadius:4
     }]
   },
   options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)}% of total)`}}
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/16928*100).toFixed(1)}% of total)`}},
+      datalabels:dlBar
     },
-    scales:{y:{beginAtZero:true,title:{display:true,text:'Orders (single-zone only)'}}}}
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Orders (single-zone only)'},
+      ticks:{callback:v=>v>0?v.toLocaleString():'0'}}}}
 });
 
 // ── Zone presence: solo vs shared (stacked bar) ───────────────────────────
 new Chart(document.getElementById('c-zone-presence'),{
   type:'bar',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['3F','2E','1H','1G','2H','3H','1Y','1A','1B'],
+    labels:['3F','2E','1H','2H','3H','1G','1A','1B','1Y'],
     datasets:[
-      {label:'Solo (only this zone)',data:[600,340,121,248,156,116,49,7,14],backgroundColor:C.green,borderRadius:2},
-      {label:'Shared (this zone + others)',data:[2378,2217,1263,879,839,800,399,168,101],backgroundColor:C.blue,borderRadius:2}
+      {label:'Solo (only this zone)',data:[1336,924,207,354,388,666,24,53,96],backgroundColor:C.green,borderRadius:2},
+      {label:'Shared (this zone + others)',data:[9792,9627,6980,5949,5474,5162,2432,1989,1583],backgroundColor:C.blue,borderRadius:2}
     ]
   },
   options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'top'}},
+    plugins:{legend:{position:'top'},datalabels:dlStack},
     scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Orders'}}}}
 });
 
 // ── Top 10 two-zone pairs ─────────────────────────────────────────────────
 new Chart(document.getElementById('c-pair-zones'),{
   type:'bar',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['2E+3F','1H+3F','1H+2E','2H+3H','1G+3F','1G+2E','2E+2H','2H+3F','3F+3H','2E+3H'],
+    labels:['2E+3F','1H+3F','1H+2E','2H+3H','1G+3F','1G+2E','3F+3H','2E+2H','2E+3H','2H+3F'],
     datasets:[{
       label:'Orders',
-      data:[766,208,148,118,111,106,82,81,81,69],
+      data:[1997,480,403,386,273,268,239,220,215,214],
       backgroundColor:C.purple,borderRadius:4
     }]
   },
   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)}%)`}}
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${c.raw} orders (${(c.raw/16928*100).toFixed(1)}%)`}},
+      datalabels:dlBarH
     },
-    scales:{x:{beginAtZero:true,title:{display:true,text:'Orders'}}}}
+    scales:{x:{beginAtZero:true,title:{display:true,text:'Orders'},
+      ticks:{callback:v=>v>0?v.toLocaleString():'0'}}}}
 });
 
 // ── Top 15 combinations with cumulative line ──────────────────────────────
 new Chart(document.getElementById('c-combos'),{
   type:'bar',
+  plugins:[ChartDataLabels],
   data:{
-    labels:['2E+3F','3F only','2E only','1G only','1H+2E+3F','1H+3F','2H only','1H+2E','1H only','2H+3H','3H only','1G+3F','1G+2E','2E+2H','3F+3H'],
+    labels:['2E+3F','3F','2E','1G','6-zone*','1H+2E+3F','1H+3F','7-zone*','1H+2E','3H','2H+3H','8-zone*','2H','7z-alt*','1H+2E+2H+3F+3H'],
     datasets:[
-      {label:'Orders',data:[766,600,340,248,213,208,156,148,121,118,116,111,106,82,81],
-       backgroundColor:[C.purple,C.blue2,C.blue,C.green,C.red,C.orange,C.accent,C.orange,C.green,C.yellow,C.green2,C.blue,C.blue,C.teal,C.blue2],
-       borderRadius:4,yAxisID:'y'},
-      {label:'Cumulative %',data:[14.9,26.6,33.2,38.0,42.1,46.1,49.1,52.0,54.4,56.7,59.0,61.2,63.3,64.9,66.5],
+      {label:'Orders',data:[1997,1336,924,666,531,495,480,429,403,388,386,376,354,330,303],
+       backgroundColor:[C.purple,C.blue2,C.blue,C.green,C.red,C.orange,C.orange,C.red,C.green2,C.teal,C.yellow,C.red,C.accent,C.blue,C.blue],
+       borderRadius:4,yAxisID:'y',datalabels:dlBar},
+      {label:'Cumulative %',data:[11.8,19.7,25.2,29.1,32.2,35.1,37.9,40.4,42.8,45.1,47.4,49.6,51.7,53.6,55.4],
        type:'line',borderColor:C.yellow,backgroundColor:'transparent',
-       pointRadius:4,borderWidth:2.5,yAxisID:'y2',tension:.3}
+       pointRadius:4,borderWidth:2.5,yAxisID:'y2',tension:.3,datalabels:{display:false}}
     ]
   },
   options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'top'},
-      tooltip:{callbacks:{label:c=>c.datasetIndex===0?` ${c.raw} orders (${(c.raw/5141*100).toFixed(1)})`:` Cumul: ${c.raw}%`}}
+    plugins:{
+      legend:{position:'top'},
+      tooltip:{callbacks:{label:c=>c.datasetIndex===0?` ${c.raw} orders (${(c.raw/16928*100).toFixed(1)})`:` Cumul: ${c.raw}%`}},
+      datalabels:{display:false}
     },
     scales:{
       y:{beginAtZero:true,title:{display:true,text:'Orders'}},
